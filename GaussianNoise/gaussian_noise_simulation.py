@@ -1,14 +1,10 @@
 import math
 import numpy
+
 """
 Generate Gaussian noise
 1. Inverse transforming
 2. Box-Muller method
-"""
-
-"""
-Inverse transforming
-Input: number of points
 """
 
 
@@ -17,6 +13,7 @@ class GaussianNoiseSimulation:
         pass
 
     """
+    1. Inverse transforming method
     using the method given by 26.2.17 formula in 'Handbook of 
     Mathematical Functions With Formulas, Graphs, and Mathematical Tables'
     """
@@ -44,20 +41,43 @@ class GaussianNoiseSimulation:
     def inverse(self, z, lower=-8.0, upper=8.0, e=1e-8) -> float:
         mid = lower + (upper - lower) / 2
         cdf = self.cdf(mid)
-        if math.fabs(cdf-z) <= e:
+        if math.fabs(cdf - z) <= e:
             return mid
         if cdf >= z:
             return self.inverse(z, lower, mid)
         else:
             return self.inverse(z, mid, upper)
 
-    """generate n uniform var and computes the corresponding normal var"""
-    def generateNGn(self, n):
-        u = numpy.random.uniform(0,1,n)
+    def inverse_transform_method(self, n):
+        u = numpy.random.uniform(0, 1, n)
         generated_gn = []
         for i in range(n):
             generated_gn.append(self.inverse(u[i]))
         return generated_gn
+
+    """generate n uniform var and computes the corresponding normal var"""
+
+
+    """
+    2. Box-Muller method
+    input: n
+    output: 2*n normal random numbers
+    """
+    def box_muller_method(self, n):
+        u1 = numpy.random.uniform(0, 1, n)
+        u2 = numpy.random.uniform(0, 1, n)
+        generated_gn = []
+        for i in range(n):
+            n1 = math.sqrt(-2 * math.log(u1[i])) * math.cos(2 * math.pi * u2[i])
+            n2 = math.sqrt(-2 * math.log(u1[i])) * math.sin(2 * math.pi * u2[i])
+            generated_gn.extend([n1, n2])
+
+        return generated_gn
+
+    def generateNGn(self, n):
+        print(self.inverse_transform_method(n))
+        print(self.box_muller_method(n))
+
 
 # todo test
 
@@ -67,6 +87,5 @@ if __name__ == '__main__':
     # print("x = 0, sigma = 5, mu = 2: ", gn.cdf(0, 5, 2))
     # t = gn.inverse(0.1)
     # print("inverse of 0.1: ", t)
-    n = 1000 # number of normal variables
-    print(gn.generateNGn(n))
-
+    num = 100  # number of normal variables
+    gn.generateNGn(num)
