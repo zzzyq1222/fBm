@@ -1,5 +1,7 @@
 import math
 import numpy
+import matplotlib
+import matplotlib.pyplot as plt
 
 """
 Generate Gaussian noise
@@ -23,6 +25,9 @@ class GaussianNoiseSimulation:
         pdf = (1 / math.sqrt(2 * math.pi)) * (math.e ** (-(x ** 2) / 2))
         return pdf
 
+    def round(self, f):
+        return round(f, 8)
+
     def cdf(self, x, sigma=1, mu=0):
         x_norm = (x - mu) / sigma
         p = 0.2316419
@@ -33,12 +38,11 @@ class GaussianNoiseSimulation:
         b5 = 1.330274429
         t = 1 / (p * x_norm + 1)
         P = 1 - self.pdf(x_norm) * t * (b1 + t * (b2 + t * (b3 + t * (b4 + t * b5))))
-        return round(P, 8)
+        return P
 
     """z is the generated uniform variable"""
 
-    # todo 调参数
-    def inverse(self, z, lower=-8.0, upper=8.0, e=1e-8) -> float:
+    def inverse(self, z, lower=-8.0, upper=8.0, e= 1e-8) -> float:
         mid = lower + (upper - lower) / 2
         cdf = self.cdf(mid)
         if math.fabs(cdf - z) <= e:
@@ -57,12 +61,12 @@ class GaussianNoiseSimulation:
 
     """generate n uniform var and computes the corresponding normal var"""
 
-
     """
     2. Box-Muller method
     input: n
     output: 2*n normal random numbers
     """
+
     def box_muller_method(self, n):
         u1 = numpy.random.uniform(0, 1, n)
         u2 = numpy.random.uniform(0, 1, n)
@@ -74,12 +78,34 @@ class GaussianNoiseSimulation:
 
         return generated_gn
 
-    def generateNGn(self, n):
-        print(self.inverse_transform_method(n))
-        print(self.box_muller_method(n))
+    def generateNGn(self, n, method):
+        if method == 'inverse':
+            return self.inverse_transform_method(n)
+        elif method == 'box-muller':
+            return self.box_muller_method(n)
 
+    def draw_histogram(self, data, name):
+        matplotlib.rcParams['axes.unicode_minus'] = False
+        plt.hist(data, bins=100, density=True, facecolor="blue", edgecolor="black")
+        plt.xlabel("x")
+        plt.ylabel("probability")
+        plt.title("Distribution using " + name)
+        plt.show()
 
-# todo test
+    def cal_sigma(self, data, mu):
+        sum = 0
+        for i in range(len(data)):
+            try:
+                sum += math.pow(data[i] - mu, 2)
+            except:
+                print(data[i], mu)
+                # given the hint by Numerical solution of SDE
+        return sum / (len(data) - 1)
+
+    def cal_mu(self, data):
+        s = sum(data)
+        return s / len(data)
+
 
 if __name__ == '__main__':
     gn = GaussianNoiseSimulation()
@@ -87,5 +113,17 @@ if __name__ == '__main__':
     # print("x = 0, sigma = 5, mu = 2: ", gn.cdf(0, 5, 2))
     # t = gn.inverse(0.1)
     # print("inverse of 0.1: ", t)
-    num = 100  # number of normal variables
-    gn.generateNGn(num)
+    num = 1_000_000  # number of normal variables
+    data_inverse = gn.generateNGn(num, 'inverse')
+    sigma_inverse = gn.cal_sigma(data_inverse, 0)
+    mu_inverse = gn.cal_mu(data_inverse)
+    gn.draw_histogram(data_inverse, "inverse transforming method")
+
+    data_box_muller = gn.generateNGn(num, 'box-muller')
+    sigma_box_muller = gn.cal_sigma(data_box_muller, 0)
+    mu_box_muller = gn.cal_mu(data_box_muller)
+    gn.draw_histogram(data_box_muller, "Box-Muller method")
+
+    print("Inverse method: sigma = ", sigma_inverse,", mu = ", mu_inverse)
+    print("Box-Muller method: sigma = ", sigma_box_muller, ", mu = ", mu_box_muller)
+    print(min(data_inverse), max(data_inverse))
