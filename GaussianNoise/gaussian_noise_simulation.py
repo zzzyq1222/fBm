@@ -25,9 +25,6 @@ class GaussianNoiseSimulation:
         pdf = (1 / math.sqrt(2 * math.pi)) * (math.e ** (-(x ** 2) / 2))
         return pdf
 
-    def round(self, f):
-        return round(f, 8)
-
     def cdf(self, x, sigma=1, mu=0):
         x_norm = (x - mu) / sigma
         p = 0.2316419
@@ -36,8 +33,13 @@ class GaussianNoiseSimulation:
         b3 = 1.781477937
         b4 = -1.821255978
         b5 = 1.330274429
-        t = 1 / (p * x_norm + 1)
-        P = 1 - self.pdf(x_norm) * t * (b1 + t * (b2 + t * (b3 + t * (b4 + t * b5))))
+        if x_norm >= 0:
+            t = 1 / (p * x_norm + 1)
+            P = 1 - self.pdf(x_norm) * t * (b1 + t * (b2 + t * (b3 + t * (b4 + t * b5))))
+            # P = 1-self.pdf(x_norm)*(b1*t+b2*(t**2)+b3*(t**3)+b4*(t**4)+b5*(t**5))
+        else:
+            t = 1 / (-p * x_norm + 1)
+            P = self.pdf(x_norm) * t * (b1 + t * (b2 + t * (b3 + t * (b4 + t * b5))))
         return P
 
     """z is the generated uniform variable"""
@@ -113,7 +115,7 @@ if __name__ == '__main__':
     # print("x = 0, sigma = 5, mu = 2: ", gn.cdf(0, 5, 2))
     # t = gn.inverse(0.1)
     # print("inverse of 0.1: ", t)
-    num = 1_000_000  # number of normal variables
+    num = 10000  # number of normal variables
     data_inverse = gn.generateNGn(num, 'inverse')
     sigma_inverse = gn.cal_sigma(data_inverse, 0)
     mu_inverse = gn.cal_mu(data_inverse)
