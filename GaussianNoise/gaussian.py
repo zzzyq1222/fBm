@@ -16,43 +16,31 @@ class GaussianNoiseSimulation:
 
     """
     1. Inverse transforming method
-    using the method given by 26.2.17 formula in 'Handbook of 
+    using the method given by 26.2.23 formula in 'Handbook of 
     Mathematical Functions With Formulas, Graphs, and Mathematical Tables'
     """
 
-    # pdf of N(0,1)
-    def pdf(self, x) -> float:
-        pdf = (1 / math.sqrt(2 * math.pi)) * (math.e ** (-(x ** 2) / 2))
-        return pdf
+    """p is the generated uniform variable"""
+    def numericalApproximation(self, t):
+        c0 = 2.515517
+        c1 = 0.802853
+        c2 = 0.010328
+        d1 = 1.432788
+        d2 = 0.189269
+        d3 = 0.001308
+        denominator = 1 + t*(d1 + t*(d2 + d3*t))
+        nominator = c0 + t*(c1+c2*t)
+        return t - nominator/denominator
 
-    def cdf(self, x, sigma=1, mu=0):
-        x_norm = (x - mu) / sigma
-        p = 0.2316419
-        b1 = 0.319381530
-        b2 = -0.356563782
-        b3 = 1.781477937
-        b4 = -1.821255978
-        b5 = 1.330274429
-        if x_norm >= 0:
-            t = 1 / (p * x_norm + 1)
-            P = 1 - self.pdf(x_norm) * t * (b1 + t * (b2 + t * (b3 + t * (b4 + t * b5))))
-            # P = 1-self.pdf(x_norm)*(b1*t+b2*(t**2)+b3*(t**3)+b4*(t**4)+b5*(t**5))
+    def inverse(self, p) -> float:
+        if p < 0.5:
+            t = math.sqrt(-2 * math.log(p))
+            return -self.numericalApproximation(t)
         else:
-            t = 1 / (-p * x_norm + 1)
-            P = self.pdf(x_norm) * t * (b1 + t * (b2 + t * (b3 + t * (b4 + t * b5))))
-        return P
+            t = math.sqrt(-2 * math.log(1-p))
+            return self.numericalApproximation(t)
 
-    """z is the generated uniform variable"""
 
-    def inverse(self, z, lower=-8.0, upper=8.0, e= 1e-8) -> float:
-        mid = lower + (upper - lower) / 2
-        cdf = self.cdf(mid)
-        if math.fabs(cdf - z) <= e:
-            return mid
-        if cdf >= z:
-            return self.inverse(z, lower, mid)
-        else:
-            return self.inverse(z, mid, upper)
 
     def inverse_transform_method(self, n):
         u = numpy.random.uniform(0, 1, n)
@@ -109,22 +97,18 @@ class GaussianNoiseSimulation:
         return s / len(data)
 
 
-if __name__ == '__main__':
-    gn = GaussianNoiseSimulation()
-    # print("x = 0, sigma = 1, mu = 0: ", gn.cdf(0))
-    # print("x = 0, sigma = 5, mu = 2: ", gn.cdf(0, 5, 2))
-    # t = gn.inverse(0.1)
-    # print("inverse of 0.1: ", t)
-    num = 1_000_000  # number of normal variables
-    data_inverse = gn.generateNGn(num, 'inverse')
-    sigma_inverse = gn.cal_sigma(data_inverse, 0)
-    mu_inverse = gn.cal_mu(data_inverse)
-    gn.draw_histogram(data_inverse, "inverse transforming method")
+gn = GaussianNoiseSimulation()
+num = 1_000_000  # number of normal variables
+data_inverse = gn.generateNGn(num, 'inverse')
+sigma_inverse = gn.cal_sigma(data_inverse, 0)
+mu_inverse = gn.cal_mu(data_inverse)
+gn.draw_histogram(data_inverse, "inverse transforming method")
+print("Inverse method: sigma = ", sigma_inverse,", mu = ", mu_inverse)
 
-    data_box_muller = gn.generateNGn(num, 'box-muller')
-    sigma_box_muller = gn.cal_sigma(data_box_muller, 0)
-    mu_box_muller = gn.cal_mu(data_box_muller)
-    gn.draw_histogram(data_box_muller, "Box-Muller method")
+data_box_muller = gn.generateNGn(num, 'box-muller')
+sigma_box_muller = gn.cal_sigma(data_box_muller, 0)
+mu_box_muller = gn.cal_mu(data_box_muller)
+gn.draw_histogram(data_box_muller, "Box-Muller method")
 
-    print("Inverse method: sigma = ", sigma_inverse,", mu = ", mu_inverse)
-    print("Box-Muller method: sigma = ", sigma_box_muller, ", mu = ", mu_box_muller)
+
+print("Box-Muller method: sigma = ", sigma_box_muller, ", mu = ", mu_box_muller)
