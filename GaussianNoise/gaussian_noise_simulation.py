@@ -84,7 +84,7 @@ class GaussianNoiseSimulation:
         if method == 'inverse':
             return self.inverse_transform_method(n)
         elif method == 'box-muller':
-            return self.box_muller_method(n)
+            return self.box_muller_method(n)[0:n]
 
     def draw_histogram(self, data, name):
         matplotlib.rcParams['axes.unicode_minus'] = False
