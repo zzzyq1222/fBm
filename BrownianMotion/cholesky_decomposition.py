@@ -5,7 +5,7 @@ sys.path.append('..')
 import GaussianNoise.gaussian_noise_simulation as gn
 
 
-class BMCholeskyFac:
+class BMCholeskyDecom:
     def generateCovMatrix(self, interval, n):
         cov_matrix = math.sqrt(interval) * np.ones([n, n])
         cov_matrix = np.tril(cov_matrix, k=0)
@@ -27,8 +27,8 @@ class BMCholeskyFac:
         return paths
 
 # if __name__ == '__main__':
-#     bmcf = BMCholeskyFac()
+#     bmcd = BMCholeskyDecom()
 #     paths = 100
 #     interval = 0.001
 #     timespan = 5
-#     utils.draw_bm_paths(paths, timespan, interval, bmcf.generateNBM(paths, timespan, interval))
+#     utils.draw_bm_paths(paths, timespan, interval, bmcd.generateNBM(paths, timespan, interval))
