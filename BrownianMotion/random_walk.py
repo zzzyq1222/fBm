@@ -1,8 +1,8 @@
 import math
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
 
+import utils
 import GaussianNoise.gaussian_noise_simulation as GN
 
 
@@ -26,20 +26,11 @@ class BMRandomWalk:
             paths[i, :] = self.generateBM(timespan, interval)
         return paths
 
-    def draw_bm_paths(self, paths, timespan, interval, data):
-        fig, ax = plt.subplots()
-        x = np.linspace(0, timespan, int(timespan / interval))
-        y = []
-        for i in range(paths):
-            y = data[i]
-            ax.plot(x, y, linewidth=0.5)
-        plt.show()
 
-
-if __name__ == '__main__':
-    bmr = BMRandomWalk()
-    paths = 100
-    interval = 0.0001
-    timespan = 5
-    n_paths = bmr.generateNBM(paths, timespan, interval)  # data
-    bmr.draw_bm_paths(paths, timespan, interval, n_paths)
+# if __name__ == '__main__':
+#     bmr = BMRandomWalk()
+#     paths = 100
+#     interval = 0.0001
+#     timespan = 5
+#     n_paths = bmr.generateNBM(paths, timespan, interval)  # data
+#     utils.draw_bm_paths(paths, timespan, interval, n_paths)
