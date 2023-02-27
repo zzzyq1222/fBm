@@ -1,18 +1,16 @@
 import math
 import numpy as np
-import matplotlib.pyplot as plt
-
-import utils
-import GaussianNoise.gaussian_noise_simulation as GN
-
+import sys
+sys.path.append('..')
+import GaussianNoise.gaussian_noise_simulation as gn
 
 class BMRandomWalk:
     """using the property of independent increments of BM to construct random walk"""
 
     def generateBM(self, time, interval):
-        gn = GN.GaussianNoiseSimulation()
+        gaussian_noise = gn.GaussianNoiseSimulation()
         size = int(time / interval)
-        data = gn.generateNGn(size, 'box-muller')
+        data = gaussian_noise.generateNGn(size, 'box-muller')
         bm = [math.sqrt(interval) * data[0]]
         for i in range(1, size):
             bm.append(math.sqrt(interval) * data[i] + bm[i - 1])
@@ -25,7 +23,6 @@ class BMRandomWalk:
         for i in range(n):
             paths[i, :] = self.generateBM(timespan, interval)
         return paths
-
 
 # if __name__ == '__main__':
 #     bmr = BMRandomWalk()

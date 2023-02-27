@@ -1,8 +1,8 @@
 import math
 import numpy as np
-import utils
-
-import GaussianNoise.gaussian_noise_simulation as GN
+import sys
+sys.path.append('..')
+import GaussianNoise.gaussian_noise_simulation as gn
 
 
 class BMCholeskyFac:
@@ -12,9 +12,9 @@ class BMCholeskyFac:
         return cov_matrix
 
     def generateBM(self, timespan, interval):
-        gn = GN.GaussianNoiseSimulation()
+        gaussian_noise = gn.GaussianNoiseSimulation()
         size = int(timespan / interval)  # number of steps
-        data = gn.generateNGn(size, 'box-muller')  # normal variable
+        data = gaussian_noise.generateNGn(size, 'box-muller')  # normal variable
         cov_matrix = self.generateCovMatrix(interval, size)
         path = np.matmul(cov_matrix, data)
         return path
