@@ -5,7 +5,7 @@ import sys
 
 sys.path.append('..')
 import GaussianNoise.gaussian_noise_simulation as gn
-
+import utils
 """
     Euler-Maruyama method and Refined Euler method
 """
@@ -101,11 +101,11 @@ if __name__ == '__main__':
     #
     results = euler_method.simulateOUProcess(0.7, 1.5, 0.06, 0, timespan=10, interval=0.001, n=10)
     # results = euler_method.simulateOUProcess(2, 0, 1, 1)
-    euler_method.draw_paths(10, 10, 0.001, results)
+    utils.draw_n_paths(10, 10, 0.001, results)
 
-    results = euler_method.simulateGBM(0.5, 0.5, 100)
-    euler_method.draw_paths(10, 10, 0.001, results)
+    results = euler_method.simulateGBM(0.5, 0.5, 10)
+    utils.draw_n_paths(10, 10, 0.001, results)
 
-    results = euler_method.simulateGBMRefined(0.5, 0.5, 100)
-    euler_method.draw_paths(10, 10, 0.001, results)
+    results = euler_method.simulateGBMRefined(0.5, 0.5, 10)
+    utils.draw_n_paths(10, 10, 0.001, results)
 

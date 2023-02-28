@@ -1,8 +1,10 @@
 import math
 import numpy as np
 import sys
+
 sys.path.append('..')
 import GaussianNoise.gaussian_noise_simulation as gn
+import utils
 
 
 class BMCholeskyDecom:
@@ -26,9 +28,10 @@ class BMCholeskyDecom:
             paths[i, :] = self.generateBM(timespan, interval)
         return paths
 
-# if __name__ == '__main__':
-#     bmcd = BMCholeskyDecom()
-#     paths = 100
-#     interval = 0.001
-#     timespan = 5
-#     utils.draw_bm_paths(paths, timespan, interval, bmcd.generateNBM(paths, timespan, interval))
+
+if __name__ == '__main__':
+    bmcd = BMCholeskyDecom()
+    paths = 100
+    interval = 0.001
+    timespan = 5
+    utils.draw_n_paths(paths, timespan, interval, bmcd.generateNBM(paths, timespan, interval))
