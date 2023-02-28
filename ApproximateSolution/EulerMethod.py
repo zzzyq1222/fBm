@@ -6,9 +6,11 @@ import sys
 sys.path.append('..')
 import GaussianNoise.gaussian_noise_simulation as gn
 import utils
+
 """
     Euler-Maruyama method and Refined Euler method
 """
+
 
 class EulerMethod:
 
@@ -27,7 +29,6 @@ class EulerMethod:
         dS_t = mu*S_t*dt + sigma*S_t*dW_t
 
     """
-
 
     def simulateOUProcess(self, theta, mu, sigma, y0, timespan=10, interval=0.001, n=10):
         steps = int(timespan / interval)
@@ -68,6 +69,7 @@ class EulerMethod:
             dS_t = mu*S_t*dt + sigma*S_t*dW_t
             b' = sigma
     """
+
     def simulateGBMRefined(self, mu, sigma, s0, timespan=10, interval=0.001, n=10):
         steps = int(timespan / interval)
         dWt = self.generateDwt(n, steps)
@@ -79,12 +81,11 @@ class EulerMethod:
             for i in range(1, steps):
                 St = St + mu * St * interval + \
                      sigma * St * math.sqrt(interval) * dWt[j][i] + \
-                     0.5 * sigma * interval*(dWt[j][i]**2 - 1)
+                     0.5 * sigma * interval * (dWt[j][i] ** 2 - 1)
                 s.append(St)
             processes[j][1:] = s
             St = s0
         return processes
-
 
     def draw_paths(self, paths, timespan, interval, data):
         fig, ax = plt.subplots()
@@ -108,4 +109,3 @@ if __name__ == '__main__':
 
     results = euler_method.simulateGBMRefined(0.5, 0.5, 10)
     utils.draw_n_paths(10, 10, 0.001, results)
-
