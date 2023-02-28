@@ -64,11 +64,7 @@ class EulerMethod:
 
     """
     Refined Euler Method:
-        1. Ornstein-Uhlenbeck process
-            dY_t = theta*(mu-Y_t)dt + sigma*dW_t
-            Y_0 = Y_init
-            b' = 0
-        2. GBM
+        1.GBM
             dS_t = mu*S_t*dt + sigma*S_t*dW_t
             b' = sigma
     """
@@ -103,13 +99,13 @@ if __name__ == '__main__':
     euler_method = EulerMethod()
 
     #
-    results = euler_method.simulateOUProcess(0.7, 1.5, 0.06, 0, timespan=7, interval=0.001, n=10)
+    results = euler_method.simulateOUProcess(0.7, 1.5, 0.06, 0, timespan=10, interval=0.001, n=10)
     # results = euler_method.simulateOUProcess(2, 0, 1, 1)
-    euler_method.draw_paths(10, 7, 0.001, results)
-
-    results = euler_method.simulateGBM(0, 1, 0.1)
     euler_method.draw_paths(10, 10, 0.001, results)
 
-    results = euler_method.simulateGBMRefined(0, 1, 0.1)
+    results = euler_method.simulateGBM(0.5, 0.5, 100)
+    euler_method.draw_paths(10, 10, 0.001, results)
+
+    results = euler_method.simulateGBMRefined(0.5, 0.5, 100)
     euler_method.draw_paths(10, 10, 0.001, results)
 
