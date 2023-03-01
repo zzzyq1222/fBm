@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 import sys
 
 sys.path.append('..')
-import GaussianNoise.gaussian_noise_simulation as gn
+# import GaussianNoise.gaussian_noise_simulation as gn
+import BrownianMotion.random_walk as rw
 import utils
 
 """
@@ -14,11 +15,11 @@ import utils
 
 class EulerMethod:
 
-    def generateDwt(self, n, steps):
+    def generateWt(self, n, steps):
         res = np.zeros([n, steps])
-        gaussian_noise = gn.GaussianNoiseSimulation()
+        brownian_motion = rw.BMRandomWalk()
         for i in range(n):
-            res[i, :] = gaussian_noise.generateNGn(steps, 'box-muller')
+            res[i, :] = brownian_motion.generateBM(steps, 1)
         return res
 
     """
@@ -32,34 +33,32 @@ class EulerMethod:
 
     def simulateOUProcess(self, theta, mu, sigma, y0, timespan=10, interval=0.001, n=10):
         steps = int(timespan / interval)
-        dWt = self.generateDwt(n, steps)
+        Wt = self.generateWt(n, steps)
         processes = np.zeros((n, steps))  # store each step
 
         yt = y0
         for j in range(n):  # generate n processes
-            processes[j][0] = y0
-            y = []
+            y = [y0]
             for i in range(1, steps):
                 yt = yt + theta * (mu - yt) * interval + \
-                     sigma * math.sqrt(interval) * dWt[j][i]
+                     sigma * math.sqrt(interval) * (Wt[j][i]-Wt[j][i-1])
                 y.append(yt)
-            processes[j][1:] = y
+            processes[j][0:] = y
             yt = y0
         return processes
 
     def simulateGBM(self, mu, sigma, s0, timespan=10, interval=0.001, n=10):
         steps = int(timespan / interval)
-        dWt = self.generateDwt(n, steps)
+        Wt = self.generateWt(n, steps)
         processes = np.zeros((n, steps))  # store each step
         St = s0
         for j in range(n):  # generate n processes
-            processes[j][0] = s0
-            s = []
+            s = [s0]
             for i in range(1, steps):
                 St = St + mu * St * interval + \
-                     sigma * St * math.sqrt(interval) * dWt[j][i]
+                     sigma * St * math.sqrt(interval) * (Wt[j][i]-Wt[j][i-1])
                 s.append(St)
-            processes[j][1:] = s
+            processes[j][0:] = s
             St = s0
         return processes
 
@@ -72,18 +71,17 @@ class EulerMethod:
 
     def simulateGBMRefined(self, mu, sigma, s0, timespan=10, interval=0.001, n=10):
         steps = int(timespan / interval)
-        dWt = self.generateDwt(n, steps)
+        Wt = self.generateWt(n, steps)
         processes = np.zeros((n, steps))  # store each step
         St = s0
         for j in range(n):  # generate n processes
-            processes[j][0] = s0
-            s = []
+            s = [s0]
             for i in range(1, steps):
                 St = St + mu * St * interval + \
-                     sigma * St * math.sqrt(interval) * dWt[j][i] + \
-                     0.5 * sigma * interval * (dWt[j][i] ** 2 - 1)
+                     sigma * St * math.sqrt(interval) * (Wt[j][i]-Wt[j][i-1]) + \
+                     0.5 * sigma * interval * ((Wt[j][i]-Wt[j][i-1]) ** 2 - 1)
                 s.append(St)
-            processes[j][1:] = s
+            processes[j][0:] = s
             St = s0
         return processes
 
