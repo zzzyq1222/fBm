@@ -10,6 +10,7 @@ import GaussianNoise.gaussian_noise_simulation as gn
 class choleskyMethodfBM:
     """
     using Cholesky method to generate fBm
+    Based on 2.2.2 of Simulation of fractional Brownian motion
     """
 
     def generateFBm(self, timespan, interval, H):
@@ -32,7 +33,7 @@ class choleskyMethodfBM:
             for j in range(1, i):
                 L[i][j] = (gamma[i - j] - L[i] @ L[j]) / L[j][j]
 
-            #todo　检查一下这个sum
+            #todo　check the sum
             L[i][i] = np.sqrt(gamma[0] - sum((L[i, 0:i]) ** 2))
 
             # new fGn
@@ -52,7 +53,7 @@ class choleskyMethodfBM:
 if __name__ == '__main__':
     cm = choleskyMethodfBM()
     nfBm = []
-    for _ in range(0, 50):
-        fBm = cm.generateFBm(10, 0.01, 0.8)
+    for _ in range(0, 20):
+        fBm = cm.generateFBm(10, 0.01, 0.2)
         nfBm.append(fBm)
-    utils.draw_n_paths(50, 10, 0.01, nfBm)
+    utils.draw_n_paths(20, 10, 0.01, nfBm)
