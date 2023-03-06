@@ -32,6 +32,7 @@ class choleskyMethodfBM:
             for j in range(1, i):
                 L[i][j] = (gamma[i - j] - L[i] @ L[j]) / L[j][j]
 
+            #todo　检查一下这个sum
             L[i][i] = np.sqrt(gamma[0] - sum((L[i, 0:i]) ** 2))
 
             # new fGn

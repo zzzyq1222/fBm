@@ -13,5 +13,5 @@ def draw_n_paths(paths, timespan, interval, data):
 
 """compute the auto-variance with H and interval k"""
 def gamma(H,k):
-    g = 1/2*(abs(k-1)**(2*H) -2*abs(k)**(2*H) + abs(k+1)**(2*H))
+    g = 1/2*(abs(k-1)**(2*H) - 2*abs(k)**(2*H) + abs(k+1)**(2*H))
     return g
