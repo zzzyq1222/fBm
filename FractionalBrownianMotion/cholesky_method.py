@@ -54,6 +54,6 @@ if __name__ == '__main__':
     cm = choleskyMethodfBM()
     nfBm = []
     for _ in range(0, 20):
-        fBm = cm.generateFBm(10, 0.01, 0.2)
+        fBm = cm.generateFBm(10, 0.01, 0.7)
         nfBm.append(fBm)
     utils.draw_n_paths(20, 10, 0.01, nfBm)
