@@ -55,7 +55,7 @@ class hoskingMethodFBm:
             F = np.rot90(F, -1)
             tau[i] = np.dot(np.dot(gamma[:i + 1], F), dn[:(i + 1)])
 
-        # Generate fBM by accumulating fGn
+        # Generate fBM by summing fGn
         fBM = [fGn[0]]
         for i in range(1, size):
             fBM.append(fBM[i - 1] + fGn[i])
