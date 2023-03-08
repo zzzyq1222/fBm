@@ -31,13 +31,12 @@ class choleskyMethodfBM:
             L[i][0] = gamma[i]
 
             for j in range(1, i):
-                L[i][j] = (gamma[i - j] - L[i] @ L[j]) / L[j][j]
+                L[i][j] = (gamma[i - j] - np.dot(L[i], L[j])) / L[j][j]
 
-            #todo　check the sum
             L[i][i] = np.sqrt(gamma[0] - sum((L[i, 0:i]) ** 2))
 
             # new fGn
-            fGn.append(Gn[:(i + 1)] @ L[i, :(i + 1)])
+            fGn.append(np.dot(Gn[:(i + 1)], L[i, :(i + 1)]))
 
         # Generate fBM by accumulating fGn
         fBM = [fGn[0]]
@@ -54,6 +53,6 @@ if __name__ == '__main__':
     cm = choleskyMethodfBM()
     nfBm = []
     for _ in range(0, 20):
-        fBm = cm.generateFBm(10, 0.01, 0.7)
+        fBm = cm.generateFBm(10, 0.01, 0.2)
         nfBm.append(fBm)
     utils.draw_n_paths(20, 10, 0.01, nfBm)
