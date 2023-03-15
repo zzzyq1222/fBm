@@ -5,6 +5,7 @@ Markovian approximation of the rough Bergomi model for Monte Carlo option pricin
 import math
 
 import numpy as np
+import matplotlib.pyplot as plt
 import sys
 
 sys.path.append('..')
@@ -14,27 +15,28 @@ import hosking_method as hm
 """
 generate Volterra process X
 """
+
+
 def volterra_process(timespan, interval):
     alpha = -0.43
     eta = 1.9
     size = int(timespan / interval)
-    # todo H = alpha+0.5
     H = 0.5 + alpha
 
     fBm = hm.hoskingMethodFBm()
     # simulate W_tj
-    Wt = fBm.generateFBm(timespan, interval, 0.5)
+    Wt = fBm.generateFBm(timespan+interval, interval, 0.5)
 
     # simulate W_t_1
-    Wt_1 = [((interval * 0.5) ** alpha) * Wt[0]]
-    for i in range(1, size):
+    Wt_1 = []
+    for i in range(1, size+1):
         newW = ((interval * 0.5) ** alpha) * (Wt[i] - Wt[i - 1])
         Wt_1.append(newW)
 
     # simulate W_j
-    W_j = [Wt[0]]
-    for i in range(1, size):
-        W_j.append(Wt[i] - Wt[i - 1])
+    W_j = []
+    for i in range(1, size+1):
+        W_j.append(Wt[i] - Wt[i-1])
 
     # calculate X
 
@@ -50,7 +52,6 @@ def volterra_process(timespan, interval):
     W_j.reverse()
     W_j = np.asarray(W_j)
     for i in range(1, size):
-        # todo H
         W_j = np.delete(W_j, 0)
         W[i, :(size - i)] = W_j * g(b_star(i + 1), H)
 
@@ -87,15 +88,70 @@ def simulate_rBergomi_model(X, Wt, timespan, interval):
 
     S = [math.e ** s for s in logS]
 
-    return logS, S
+    return V, logS, S
 
+
+"""
+    Test
+    1. Check the mean and variance of Volterra process
+"""
+
+
+def VolterraProcessTest(V, timespan, interval):
+    alpha = -0.43
+    size = int(timespan / interval)
+    # known expectation and variance
+    t = np.array([i*interval for i in range(size)])
+    E = 0 * t
+    Var = t ** (2 * alpha + 1)  # Known variance
+
+    # simulated data
+    sim_E = np.mean(V, axis=0, keepdims=True)
+    sim_Var = np.var(V,axis=0, keepdims=True)
+    plot, axes = plt.subplots()
+    axes.plot(t, E, 'g')
+    axes.plot(t, Var, 'g')
+    axes.plot(t, sim_E[0,:], 'r')
+    axes.plot(t, sim_Var[0,:], 'r')
+
+    axes.set_xlabel('t')
+    plt.show()
+
+def VtTest(Vt, timespan, interval):
+    size = int(timespan / interval)
+    t = np.array([i*interval for i in range(size)])
+    Vt_mean = np.mean(Vt, axis=0, keepdims=True)
+
+    plot, axes = plt.subplots()
+
+    axes.plot(t, Vt_mean[0, :], 'r')
+    axes.plot(t, 0.026 * np.ones_like(t), 'g')
+
+    axes.set_xlabel('t')
+    plt.show()
 
 if __name__ == '__main__':
-    timespan = 10
+    timespan = 1
     interval = 0.01
-    res = []
-    for i in range(5):
-        X, Wt = volterra_process(timespan, interval)
-        logS, S = simulate_rBergomi_model(X, Wt, timespan, interval)
-        res.append(S)
-    utils.draw_n_paths(5, timespan, interval, res)
+    SP = []  # stock price
+    V = []  # Volterra process
+    Vt = []
+    for i in range(1000):
+        X, Wt = volterra_process(timespan, interval)  # Volterra process
+        V.append(X)
+
+        Vt, logS, S = simulate_rBergomi_model(X, Wt, timespan, interval)
+
+        SP.append(S)
+        Vt.append(Vt)
+
+    # check
+    VolterraProcessTest(V, timespan, interval)
+
+    # Vt
+    VtTest(V, timespan, interval)
+
+    # S
+    S_mean = np.mean(SP, axis=0, keepdims=True)
+    utils.draw_n_paths(1, timespan, interval, [S_mean[0,:]])
+
