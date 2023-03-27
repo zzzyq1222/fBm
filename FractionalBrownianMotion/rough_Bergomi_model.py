@@ -1,157 +1,127 @@
-"""
-Simulate the rough Bergomi model based on
-Markovian approximation of the rough Bergomi model for Monte Carlo option pricing 5.1 & 5.2
-"""
-import math
-
 import numpy as np
 import matplotlib.pyplot as plt
+
 import sys
 
 sys.path.append('..')
 import utils
-import hosking_method as hm
 
 """
-generate Volterra process X
+Simulate the rough Bergomi model based on
+Markovian approximation of the rough Bergomi model for Monte Carlo option pricing 5.1 & 5.2
+eta = 1.9
+alpha = -0.43
+xi_0 = 0.026
+
+rho = -0.9
+parameter rho is from paper: Hybrid scheme for Brownian semistationary processes
 """
 
 
-def volterra_process(timespan, interval):
+# generate Volterra Process
+# N: number of paths
+def VolterraProcess(N, steps, interval):
     alpha = -0.43
-    eta = 1.9
-    size = int(timespan / interval)
-    H = 0.5 + alpha
 
-    fBm = hm.hoskingMethodFBm()
-    # simulate W_tj
-    Wt = fBm.generateFBm(timespan+interval, interval, 0.5)
+    #todo
+    cov = lambda a: np.array([[interval, 1. / (a + 1) * interval ** (a + 1)],
+                              [1. / (a + 1) * interval ** (a + 1),
+                               1. / (2 * a + 1) * interval ** (2 * a + 1)]])
+    b = lambda k: ((k ** (alpha + 1) - (k - 1) ** (alpha + 1)) / (alpha + 1)) ** (1 / alpha)
+    g = lambda x: x ** alpha
+    sigma = np.sqrt(2 * alpha + 1)
 
-    # simulate W_t_1
-    Wt_1 = []
-    for i in range(1, size+1):
-        newW = ((interval * 0.5) ** alpha) * (Wt[i] - Wt[i - 1])
-        Wt_1.append(newW)
+    # mean, cov ,size
+    dW = np.random.multivariate_normal(np.array([0, 0]), cov(alpha), (N, steps))
 
-    # simulate W_j
-    W_j = []
-    for i in range(1, size+1):
-        W_j.append(Wt[i] - Wt[i-1])
+    # Riemann sum
+    I1 = np.zeros((N, 1 + steps))
+    for i in range(0, steps):
+        I1[:, i + 1] = dW[:, i, 1]
 
-    # calculate X
+    # Wiener integral
+    kernel = np.zeros(1 + steps)
+    for i in range(2, steps):
+        kernel[i] = g(b(i) / steps)
 
-    sigma = math.sqrt(2 * alpha + 1)
-    b_star = lambda k: ((k ** (alpha + 1) - (k - 1) ** (alpha + 1)) / (alpha + 1)) ** (1 / alpha)
-    g = lambda b, H: (b * interval) ** (H - 0.5)
-
-    # column of sigma
-    sigma_col = np.ones(size) * sigma
-    # construct the matrix W
-    W = np.zeros((size, size))
-    W[0, :] = Wt_1[::-1]
-    W_j.reverse()
-    W_j = np.asarray(W_j)
-    for i in range(1, size):
-        W_j = np.delete(W_j, 0)
-        W[i, :(size - i)] = W_j * g(b_star(i + 1), H)
-
-    # rotate anti-clockwise to get the W
-    W = np.rot90(W, 1)
-    X = np.dot(W, sigma_col)
-
-    return X, Wt
+    W = dW[:, :, 0]
+    tmp = np.zeros((N, len(W[0, :]) + len(kernel) - 1))
+    for i in range(N):
+        tmp[i, :] = np.convolve(kernel, W[i, :])
+    I2 = tmp[:, :steps]
+    VP = sigma * (I1[:, 0:steps] + I2)
+    return VP, dW
 
 
-"""
-simulation of the stock price in the rBergomi model
-"""
-
-
-def simulate_rBergomi_model(X, Wt, timespan, interval):
-    N = int(timespan / interval)
+def simulate_rBergomi_model(VP, dW, timespan, interval, steps):
     Xi_0 = 0.026
     eta = 1.9
     alpha = -0.43
 
-    # generate V
-    V = [Xi_0]
-    for i in range(1, N):
-        exponent = eta * X[i] - (eta ** 2) * 0.5 * (i * interval) ** (2 * alpha + 1)
-        Vt = Xi_0 * (math.e ** exponent)
-        V.append(Vt)
+    # construct variance process
+    t = np.array([i * interval for i in range(steps)])
+    dW2 = np.random.randn(N, steps) * np.sqrt(interval)
 
-    # generate log stock price
-    logS = [0]
-    for i in range(1, N):
-        newS = logS[i - 1] + math.sqrt(V[i]) * (Wt[i] - Wt[i - 1]) - 0.5 * V[i] * interval
-        logS.append(newS)
+    rho = -0.9
+    dB = rho * dW[:, :, 0] + np.sqrt(1 - rho ** 2) * dW2
+    spotV = Xi_0 * np.exp(eta * VP - 0.5 * (eta ** 2) * t ** (2 * alpha + 1))
 
-    S = [math.e ** s for s in logS]
+    # generate logS and S
+    dlogS = np.sqrt(spotV) * dB - 0.5 * spotV * interval
+    S = np.exp(np.cumsum(dlogS, axis=1))
+    S = np.insert(S, 0, 1, axis=1)
 
-    return V, logS, S
+    return spotV, S, t
 
 
-"""
-    Test
-    1. Check the mean and variance of Volterra process
-"""
-
-
-def VolterraProcessTest(V, timespan, interval):
+def VolterraProcessTest(V, timespan, interval, steps):
     alpha = -0.43
-    size = int(timespan / interval)
     # known expectation and variance
-    t = np.array([i*interval for i in range(size)])
+    t = np.array([i * interval for i in range(steps)])
     E = 0 * t
     Var = t ** (2 * alpha + 1)  # Known variance
 
     # simulated data
     sim_E = np.mean(V, axis=0, keepdims=True)
-    sim_Var = np.var(V,axis=0, keepdims=True)
-    plot, axes = plt.subplots()
-    axes.plot(t, E, 'g')
-    axes.plot(t, Var, 'g')
-    axes.plot(t, sim_E[0,:], 'r')
-    axes.plot(t, sim_Var[0,:], 'r')
+    sim_Var = np.var(V, axis=0, keepdims=True)
+    plot, ax = plt.subplots()
+    ax.plot(t, E)
+    ax.plot(t, Var)
+    ax.plot(t, sim_E[0, :])
+    ax.plot(t, sim_Var[0, :])
 
-    axes.set_xlabel('t')
+    ax.set_ylabel('X')
+    ax.set_xlabel('t')
+    plt.title('Mean and variance of Volterra process')
     plt.show()
+
 
 def VtTest(Vt, timespan, interval):
     size = int(timespan / interval)
-    t = np.array([i*interval for i in range(size)])
+    t = np.array([i * interval for i in range(size)])
     Vt_mean = np.mean(Vt, axis=0, keepdims=True)
+    plot, ax = plt.subplots()
 
-    plot, axes = plt.subplots()
-
-    axes.plot(t, Vt_mean[0, :], 'r')
-    axes.plot(t, 0.026 * np.ones_like(t), 'g')
-
-    axes.set_xlabel('t')
+    ax.plot(t, Vt_mean[0, :])
+    ax.plot(t, 0.026 * np.ones_like(t))
+    ax.set_xlabel('t')
+    ax.set_ylabel('Vt')
+    plt.title('Spot Variance')
     plt.show()
 
+
 if __name__ == '__main__':
-    timespan = 1
-    interval = 0.01
-    SP = []  # stock price
-    V = []  # Volterra process
-    Vt = []
-    for i in range(1000):
-        X, Wt = volterra_process(timespan, interval)  # Volterra process
-        V.append(X)
+    N = 10000
+    timespan = 1.0
+    steps = 100
 
-        Vt, logS, S = simulate_rBergomi_model(X, Wt, timespan, interval)
+    interval = timespan / steps
 
-        SP.append(S)
-        Vt.append(Vt)
+    X, dW = VolterraProcess(N, steps, interval)
+    VolterraProcessTest(X[:, 0:steps], timespan, interval, steps)
 
-    # check
-    VolterraProcessTest(V, timespan, interval)
+    VarianceP, SP, t = simulate_rBergomi_model(X, dW, timespan, interval, steps)
+    VtTest(VarianceP, timespan, interval)
 
-    # Vt
-    VtTest(V, timespan, interval)
-
-    # S
-    S_mean = np.mean(SP, axis=0, keepdims=True)
-    utils.draw_n_paths(1, timespan, interval, [S_mean[0,:]])
-
+    # stock price
+    utils.draw_n_paths(1, timespan + interval, interval, [SP[0]], 'stock price')
