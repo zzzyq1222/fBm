@@ -1,10 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import math
+from scipy.optimize import brentq
 
 import sys
 
 sys.path.append('..')
 import utils
+import GaussianNoise.gaussian_noise_simulation as gn
 
 """
 Simulate the rough Bergomi model based on
@@ -14,6 +17,7 @@ alpha = -0.43
 xi_0 = 0.026
 
 rho = -0.9
+xi_0 = 0.235 ** 2
 parameter rho is from paper: Hybrid scheme for Brownian semistationary processes
 """
 
@@ -23,7 +27,7 @@ parameter rho is from paper: Hybrid scheme for Brownian semistationary processes
 def VolterraProcess(N, steps, interval):
     alpha = -0.43
 
-    #todo
+    # todo
     cov = lambda a: np.array([[interval, 1. / (a + 1) * interval ** (a + 1)],
                               [1. / (a + 1) * interval ** (a + 1),
                                1. / (2 * a + 1) * interval ** (2 * a + 1)]])
@@ -79,7 +83,7 @@ def VolterraProcessTest(V, timespan, interval, steps):
     # known expectation and variance
     t = np.array([i * interval for i in range(steps)])
     E = 0 * t
-    Var = t ** (2 * alpha + 1)  # Known variance
+    Var = t ** (2 * alpha + 1)
 
     # simulated data
     sim_E = np.mean(V, axis=0, keepdims=True)
@@ -110,6 +114,37 @@ def VtTest(Vt, timespan, interval):
     plt.show()
 
 
+def calImpliedVol(ST, timespan):
+    k = np.arange(-0.4, 0.4, 0.01)
+    K = np.array([math.e ** i for i in k])[np.newaxis, :]
+    call_prices = np.mean(np.maximum(ST[:, np.newaxis] - K, 0), axis=0)[:, np.newaxis]
+    iv = []
+    for i in range(len(k)):
+        iv.append(implied_vol(1, K[0][i], timespan, call_prices[i]))
+
+    plot, axes = plt.subplots()
+    axes.plot(k, iv)
+    axes.set_ylabel('implied volatility', fontsize=16)
+    axes.set_xlabel('k', fontsize=16)
+    plt.show()
+    return iv
+
+
+def call_price(S, K, T, sigma):
+    # r = 0
+    d1 = (np.log(S / K) + (0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    g = gn.GaussianNoiseSimulation()
+    C = S * g.cdf(d1) - K * g.cdf(d2)
+    return C
+
+
+def implied_vol(S, K, T, C):
+    def cp(sigma):
+        return call_price(S, K, T, sigma) - C
+
+    return brentq(cp, a=1e-9, b=10.0)
+
 if __name__ == '__main__':
     N = 10000
     timespan = 1.0
@@ -125,3 +160,5 @@ if __name__ == '__main__':
 
     # stock price
     utils.draw_n_paths(1, timespan + interval, interval, [SP[0]], 'stock price')
+
+    iv = calImpliedVol(SP[:, -1], timespan)
