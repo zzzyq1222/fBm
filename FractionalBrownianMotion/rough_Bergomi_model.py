@@ -34,8 +34,6 @@ def VolterraProcess(N, steps, interval):
     b = lambda k: ((k ** (alpha + 1) - (k - 1) ** (alpha + 1)) / (alpha + 1)) ** (1 / alpha)
     g = lambda x: x ** alpha
     sigma = np.sqrt(2 * alpha + 1)
-
-    # mean, cov ,size
     dW = np.random.multivariate_normal(np.array([0, 0]), cov(alpha), (N, steps))
 
     # Riemann sum
@@ -57,14 +55,19 @@ def VolterraProcess(N, steps, interval):
     return VP, dW
 
 
-def simulate_rBergomi_model(VP, dW, timespan, interval, steps):
+def simulate_rBergomi_model(VP, dW, timespan, interval, steps, N):
     Xi_0 = 0.026
     eta = 1.9
     alpha = -0.43
 
     # construct variance process
     t = np.array([i * interval for i in range(steps)])
-    dW2 = np.random.randn(N, steps) * np.sqrt(interval)
+    g = gn.GaussianNoiseSimulation()
+    dW2 = []
+    for i in range(N):
+        dW2.append(g.generateNGn(steps, 'box-muller'))
+
+    dW2 = np.sqrt(interval) * np.array(dW2)
 
     rho = -0.9
     dB = rho * dW[:, :, 0] + np.sqrt(1 - rho ** 2) * dW2
@@ -94,12 +97,12 @@ def VolterraProcessTest(V, timespan, interval, steps):
     ax.plot(t, sim_E[0, :])
     ax.plot(t, sim_Var[0, :])
 
-    ax.set_ylabel('X')
     ax.set_xlabel('t')
     plt.title('Mean and variance of Volterra process')
     plt.show()
 
 
+# spot variance
 def VtTest(Vt, timespan, interval):
     size = int(timespan / interval)
     t = np.array([i * interval for i in range(size)])
@@ -155,10 +158,11 @@ if __name__ == '__main__':
     X, dW = VolterraProcess(N, steps, interval)
     VolterraProcessTest(X[:, 0:steps], timespan, interval, steps)
 
-    VarianceP, SP, t = simulate_rBergomi_model(X, dW, timespan, interval, steps)
+    VarianceP, SP, t = simulate_rBergomi_model(X, dW, timespan, interval, steps, N)
     VtTest(VarianceP, timespan, interval)
 
     # stock price
-    utils.draw_n_paths(1, timespan + interval, interval, [SP[0]], 'stock price')
+    SP_mean = np.mean(SP, axis=0, keepdims=True)
+    utils.draw_n_paths(1, timespan + interval, interval, [SP_mean[0]], 'stock price')
 
     iv = calImpliedVol(SP[:, -1], timespan)
