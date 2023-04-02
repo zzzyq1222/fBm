@@ -28,7 +28,8 @@ class EulerMethod:
         dY_t = theta*(mu-Y_t)dt + sigma*dW_t
     2. GBM
         dS_t = mu*S_t*dt + sigma*S_t*dW_t
-
+    3. Bm with drift
+        dX_t = mu*dt + sigma * dW_t
     """
 
     def simulateOUProcess(self, theta, mu, sigma, y0, timespan=10, interval=0.001, n=10):
@@ -62,6 +63,20 @@ class EulerMethod:
             St = s0
         return processes
 
+    def simulateBMDrift(self, mu, sigma, x0, timespan=10, interval=0.001, n=10):
+        steps = int(timespan / interval)
+        Wt = self.generateWt(n, steps)
+        processes = np.zeros((n, steps))  # store each step
+        Xt = x0
+        for j in range(n):  # generate n processes
+            x = [x0]
+            for i in range(1, steps):
+                Xt = Xt + mu * interval + \
+                     sigma * math.sqrt(interval) * (Wt[j][i] - Wt[j][i - 1])
+                x.append(Xt)
+            processes[j][0:] = x
+            Xt = x0
+        return processes
     """
     Refined Euler Method:
         1.GBM
@@ -103,6 +118,9 @@ if __name__ == '__main__':
     utils.draw_n_paths(10, 10, 0.001, results)
 
     results = euler_method.simulateGBM(0.5, 0.5, 10)
+    utils.draw_n_paths(10, 10, 0.001, results)
+
+    results = euler_method.simulateBMDrift(1, 1, 0)
     utils.draw_n_paths(10, 10, 0.001, results)
 
     results = euler_method.simulateGBMRefined(0.5, 0.5, 10)
