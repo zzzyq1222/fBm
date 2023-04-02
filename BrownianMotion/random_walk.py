@@ -27,8 +27,8 @@ class BMRandomWalk:
 
 if __name__ == '__main__':
     bmr = BMRandomWalk()
-    paths = 100
-    interval = 0.0001
-    timespan = 5
+    paths = 10
+    interval = 0.001
+    timespan = 100
     n_paths = bmr.generateNBM(paths, timespan, interval)  # data
     utils.draw_n_paths(paths, timespan, interval, n_paths)
