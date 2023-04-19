@@ -55,7 +55,7 @@ def VolterraProcess(N, steps, interval):
     return VP, dW
 
 
-def simulate_rBergomi_model(VP, dW, timespan, interval, steps, N):
+def simulate_rBergomi_model(VP, dW, timespan, interval, steps, N, S0):
     Xi_0 = 0.026
     eta = 1.9
     alpha = -0.43
@@ -74,9 +74,9 @@ def simulate_rBergomi_model(VP, dW, timespan, interval, steps, N):
     spotV = Xi_0 * np.exp(eta * VP - 0.5 * (eta ** 2) * t ** (2 * alpha + 1))
 
     # generate logS and S
-    dlogS = np.sqrt(spotV) * dB - 0.5 * spotV * interval
-    S = np.exp(np.cumsum(dlogS, axis=1))
-    S = np.insert(S, 0, 1, axis=1)
+    logS = np.sqrt(spotV) * dB - 0.5 * spotV * interval
+    logS = np.insert(logS, 0, math.log(S0), axis=1)
+    S = np.exp(np.cumsum(logS, axis=1))
 
     return spotV, S, t
 
@@ -110,10 +110,11 @@ def VtTest(Vt, timespan, interval):
     plot, ax = plt.subplots()
 
     ax.plot(t, Vt_mean[0, :])
-    ax.plot(t, 0.026 * np.ones_like(t))
+    # ax.plot(t, 0.026 * np.ones_like(t))
     ax.set_xlabel('t')
-    ax.set_ylabel('Vt')
-    plt.title('Spot Variance')
+    ax.set_ylabel('V(t)')
+    # plt.title('Spot Variance')
+    plt.savefig('../figs/spot variance.pdf')
     plt.show()
 
 
@@ -127,8 +128,9 @@ def calImpliedVol(ST, timespan):
 
     plot, axes = plt.subplots()
     axes.plot(k, iv)
-    axes.set_ylabel('implied volatility', fontsize=16)
-    axes.set_xlabel('k', fontsize=16)
+    axes.set_ylabel('Implied Volatility', fontsize=16)
+    axes.set_xlabel('Log Strike Price', fontsize=16)
+    # plt.savefig('../figs/implied volatility.pdf')
     plt.show()
     return iv
 
@@ -150,7 +152,7 @@ def implied_vol(S, K, T, C):
 
 if __name__ == '__main__':
     N = 10000
-    timespan = 1.0
+    timespan = 1
     steps = 100
 
     interval = timespan / steps
@@ -158,11 +160,13 @@ if __name__ == '__main__':
     X, dW = VolterraProcess(N, steps, interval)
     VolterraProcessTest(X[:, 0:steps], timespan, interval, steps)
 
-    VarianceP, SP, t = simulate_rBergomi_model(X, dW, timespan, interval, steps, N)
+    S0 = 1
+    VarianceP, SP, t = simulate_rBergomi_model(X, dW, timespan, interval, steps, N, S0)
     VtTest(VarianceP, timespan, interval)
 
+    utils.draw_n_paths(100, timespan+interval,interval,SP)
     # stock price
     SP_mean = np.mean(SP, axis=0, keepdims=True)
-    utils.draw_n_paths(1, timespan + interval, interval, [SP_mean[0]], 'stock price')
+    utils.draw_n_paths(1, timespan + interval, interval, [SP_mean[0]], 'Stock Price')
 
     iv = calImpliedVol(SP[:, -1], timespan)

@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 
-def draw_n_paths(paths, timespan, interval, data, title = "", xlabel = "", ylabel = ""):
+
+def draw_n_paths(paths, timespan, interval, data, title="", xlabel="", ylabel="", path=""):
     fig, ax = plt.subplots()
     x = np.linspace(0, timespan, int(timespan / interval))
     for i in range(paths):
@@ -11,10 +12,14 @@ def draw_n_paths(paths, timespan, interval, data, title = "", xlabel = "", ylabe
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
+    if path != '':
+        plt.savefig(path)
     plt.show()
 
 
 """compute the auto-variance with H and interval k"""
-def gamma(H,k):
-    g = 0.5*(abs(k-1)**(2*H) - 2*abs(k)**(2*H) + abs(k+1)**(2*H))
+
+
+def gamma(H, k):
+    g = 0.5 * (abs(k - 1) ** (2 * H) - 2 * abs(k) ** (2 * H) + abs(k + 1) ** (2 * H))
     return g
