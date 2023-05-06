@@ -18,7 +18,7 @@ xi_0 = 0.026
 
 rho = -0.9
 xi_0 = 0.235 ** 2
-parameter rho is from paper: Hybrid scheme for Brownian semistationary processes
+parameter rho is from paper: Pricing under volatility
 """
 
 
@@ -28,9 +28,9 @@ def VolterraProcess(N, steps, interval):
     alpha = -0.43
 
     # todo
-    cov = lambda a: np.array([[interval, 1. / (a + 1) * interval ** (a + 1)],
-                              [1. / (a + 1) * interval ** (a + 1),
-                               1. / (2 * a + 1) * interval ** (2 * a + 1)]])
+    cov = lambda a: np.array([[interval, 1 / (a + 1) * interval ** (a + 1)],
+                              [1 / (a + 1) * interval ** (a + 1),
+                               1 / (2 * a + 1) * interval ** (2 * a + 1)]])
     b = lambda k: ((k ** (alpha + 1) - (k - 1) ** (alpha + 1)) / (alpha + 1)) ** (1 / alpha)
     g = lambda x: x ** alpha
     sigma = np.sqrt(2 * alpha + 1)
